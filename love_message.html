@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>星河寄语</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="landing-page" id="landingPage">
+        <div class="starfield" id="landingStars"></div>
+        <div class="moon"></div>
+        <div class="cloud" style="top: 20%; width: 150px; height: 30px; animation-duration: 40s; opacity: 0.5;"></div>
+        <div class="cloud" style="top: 45%; width: 200px; height: 40px; animation-duration: 50s; opacity: 0.3;"></div>
+        <div class="cloud" style="top: 70%; width: 120px; height: 25px; animation-duration: 35s; opacity: 0.4;"></div>
+        <h1 class="title-text">星河寄语</h1>
+        <button class="main-button" id="startButton">
+            <span class="button-border"></span>
+            开启星途
+        </button>
+        <p class="subtitle-text">愿我如星君如月</p>
+    </div>
+
+    <div class="message-container" id="messageContainer">
+        <button class="back-button" id="backButton">归去</button>
+        <div class="three-container" id="threeContainer"></div>
+        <div class="hint-text" id="hintText">漫游星河 · 每一句低语都藏着一个故事</div>
+        <div class="depth-indicator" id="depthIndicator">相遇 → 相识 → 相知 → 相恋 → 相守</div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <button class="close-modal" id="closeModal">×</button>
+        <div class="modal-content">
+            <div class="modal-media" id="modalMedia">
+                <div class="modal-media-placeholder">影像待启</div>
+            </div>
+            <h3 class="modal-title" id="modalTitle">星语</h3>
+            <p class="modal-text" id="modalText">在这里输入你的记录...</p>
+            <div class="modal-audio" id="modalAudio"></div>
+        </div>
+    </div>
+
+    <div class="audio-controls">
+        <button class="audio-btn" id="audioBtn">🔊</button>
+    </div>
+
+    <!-- 音频可选：把 click.mp3 / bgm.mp3 放到 No1 文件夹后取消下面注释 -->
+    <!--
+    <audio id="clickSound" preload="auto"><source src="click.mp3" type="audio/mpeg"></audio>
+    <audio id="bgm" preload="auto" loop><source src="bgm.mp3" type="audio/mpeg"></audio>
+    -->
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/renderers/CSS2DRenderer.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/galaxy.js"></script>
+    <script src="js/boot.js"></script>
+</body>
+</html>
