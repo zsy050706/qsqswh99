@@ -17,6 +17,8 @@
     var onVerseClick = null;
     var containerEl = null;
     var onControlsStart = null;
+    var autoRotateResumeTimer = null;
+    var hiddenVerseIndexes = {};
 
     var raycaster = new THREE.Raycaster();
     var mouse = new THREE.Vector2();
@@ -24,6 +26,50 @@
     function truncateText(text, maxLen) {
         if (text.length <= maxLen) return text;
         return text.slice(0, maxLen) + '…';
+    }
+
+    function getVerseColor(index) {
+        var colors = [
+            { main: '212, 175, 55', glow: '212, 175, 55' },
+            { main: '255, 183, 197', glow: '255, 120, 170' },
+            { main: '139, 217, 255', glow: '84, 180, 255' },
+            { main: '190, 255, 198', glow: '110, 235, 150' },
+            { main: '218, 190, 255', glow: '165, 120, 255' },
+            { main: '255, 214, 153', glow: '255, 168, 88' },
+            { main: '255, 246, 180', glow: '255, 226, 88' }
+        ];
+        return colors[index % colors.length];
+    }
+
+    function stopAutoRotate() {
+        if (!controls) return;
+        controls.autoRotate = false;
+        if (autoRotateResumeTimer) {
+            clearTimeout(autoRotateResumeTimer);
+            autoRotateResumeTimer = null;
+        }
+    }
+
+    function resumeAutoRotateAfterDelay() {
+        if (!controls) return;
+        stopAutoRotate();
+        autoRotateResumeTimer = setTimeout(function () {
+            if (controls) {
+                controls.autoRotate = true;
+            }
+            autoRotateResumeTimer = null;
+        }, 5000);
+    }
+
+    function hideVerse(index) {
+        hiddenVerseIndexes[index] = true;
+        verseEntries.forEach(function (entry) {
+            if (entry.index === index) {
+                entry.hidden = true;
+                entry.group.visible = false;
+                entry.labelEl.classList.add('verse-node-hidden');
+            }
+        });
     }
 
     function computePositions3D(count) {
@@ -95,6 +141,11 @@
         camera.getWorldDirection(cameraDirection);
 
         verseEntries.forEach(function (entry) {
+            if (entry.hidden) {
+                entry.labelEl.style.display = 'none';
+                return;
+            }
+
             var worldPos = new THREE.Vector3();
             entry.group.getWorldPosition(worldPos);
 
@@ -143,6 +194,7 @@
     }
 
     function onPointerDown(e) {
+        stopAutoRotate();
         pointerDown = { x: e.clientX, y: e.clientY, time: Date.now() };
     }
 
@@ -165,7 +217,10 @@
         var hits = raycaster.intersectObjects(hitMeshes, false);
 
         if (hits.length > 0 && onVerseClick) {
-            onVerseClick(hits[0].object.userData.index);
+            var hitIndex = hits[0].object.userData.index;
+            if (!hiddenVerseIndexes[hitIndex]) {
+                onVerseClick(hitIndex);
+            }
         }
     }
 
@@ -182,6 +237,10 @@
         containerEl = options.container;
         onVerseClick = options.onVerseClick;
         var starData = options.starData || [];
+        hiddenVerseIndexes = {};
+        (options.hiddenIndexes || []).forEach(function (index) {
+            hiddenVerseIndexes[index] = true;
+        });
 
         containerEl.innerHTML = '';
 
@@ -244,8 +303,12 @@
             hitMeshes.push(hitMesh);
 
             var labelEl = document.createElement('div');
-            labelEl.className = 'verse-node';
+            var verseColor = getVerseColor(index);
+            var isHidden = !!hiddenVerseIndexes[index];
+            labelEl.className = isHidden ? 'verse-node verse-node-hidden' : 'verse-node';
             labelEl.style.animationDelay = (Math.random() * 3) + 's';
+            labelEl.style.setProperty('--verse-color', verseColor.main);
+            labelEl.style.setProperty('--verse-glow-color', verseColor.glow);
             labelEl.innerHTML = '<span class="verse-text">' + truncateText(item.text, 22) + '</span>';
             labelLayer.appendChild(labelEl);
 
@@ -260,15 +323,16 @@
                     var dx = e.clientX - down.x;
                     var dy = e.clientY - down.y;
                     down = null;
-                    if (Math.sqrt(dx * dx + dy * dy) < 12 && onVerseClick) {
+                    if (Math.sqrt(dx * dx + dy * dy) < 12 && onVerseClick && !hiddenVerseIndexes[idx]) {
                         e.stopPropagation();
                         onVerseClick(idx);
                     }
                 });
             })(index, labelEl);
 
+            group.visible = !isHidden;
             scene.add(group);
-            verseEntries.push({ group: group, labelEl: labelEl, hitMesh: hitMesh });
+            verseEntries.push({ index: index, group: group, labelEl: labelEl, hitMesh: hitMesh, hidden: isHidden });
         });
 
         renderer.domElement.addEventListener('pointerdown', onPointerDown);
@@ -276,9 +340,10 @@
         window.addEventListener('resize', onResize);
 
         onControlsStart = function () {
-            controls.autoRotate = false;
+            stopAutoRotate();
         };
         controls.addEventListener('start', onControlsStart);
+        controls.addEventListener('end', resumeAutoRotateAfterDelay);
 
         animate();
     }
@@ -305,8 +370,14 @@
 
         window.removeEventListener('resize', onResize);
 
+        if (autoRotateResumeTimer) {
+            clearTimeout(autoRotateResumeTimer);
+            autoRotateResumeTimer = null;
+        }
+
         if (controls && onControlsStart) {
             controls.removeEventListener('start', onControlsStart);
+            controls.removeEventListener('end', resumeAutoRotateAfterDelay);
         }
         onControlsStart = null;
 
@@ -350,5 +421,5 @@
         containerEl = null;
     }
 
-    window.GalaxyScene = { init: init, destroy: destroy };
+    window.GalaxyScene = { init: init, destroy: destroy, hideVerse: hideVerse };
 })();

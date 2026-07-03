@@ -285,6 +285,8 @@ body {
 .verse-node {
     --verse-opacity: 0.45;
     --verse-scale: 1;
+    --verse-color: 212, 175, 55;
+    --verse-glow-color: 212, 175, 55;
     position: absolute;
     left: 0;
     top: 0;
@@ -300,15 +302,20 @@ body {
     will-change: left, top, transform;
 }
 
+.verse-node-hidden {
+    display: none !important;
+    pointer-events: none !important;
+}
+
 .verse-text {
     display: inline-block;
     font-size: 13px;
     line-height: 1.65;
     letter-spacing: 1px;
-    color: rgba(212, 175, 55, calc(var(--verse-opacity) * 0.85));
+    color: rgba(var(--verse-color), calc(var(--verse-opacity) * 0.9));
     text-shadow:
-        0 0 8px rgba(212, 175, 55, calc(var(--verse-opacity) * 0.4)),
-        0 0 20px rgba(212, 175, 55, calc(var(--verse-opacity) * 0.15));
+        0 0 8px rgba(var(--verse-glow-color), calc(var(--verse-opacity) * 0.45)),
+        0 0 20px rgba(var(--verse-glow-color), calc(var(--verse-opacity) * 0.18));
     white-space: normal;
     max-width: 200px;
 }

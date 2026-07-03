@@ -23,6 +23,28 @@
 
     var isAudioPlaying = true;
     var hasAudio = !!(clickSound && bgm);
+    var activeVerseIndex = null;
+    var viewedVerseKey = 'qsqswh99-viewed-verses';
+
+    function getViewedVerseIndexes() {
+        try {
+            var saved = localStorage.getItem(viewedVerseKey);
+            var parsed = saved ? JSON.parse(saved) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (err) {
+            return [];
+        }
+    }
+
+    function saveViewedVerse(index) {
+        var viewed = getViewedVerseIndexes();
+        if (viewed.indexOf(index) === -1) {
+            viewed.push(index);
+        }
+        try {
+            localStorage.setItem(viewedVerseKey, JSON.stringify(viewed));
+        } catch (err) {}
+    }
 
     function createLandingStars(container, count) {
         if (!container) return;
@@ -45,6 +67,8 @@
     function openModal(index) {
         var data = starData[index];
         if (!data) return;
+
+        activeVerseIndex = index;
 
         var mediaHtml = '';
         if (data.video) {
@@ -70,6 +94,11 @@
 
     function closeModalFunc() {
         modalOverlay.classList.remove('show');
+        if (activeVerseIndex !== null && window.GalaxyScene && typeof window.GalaxyScene.hideVerse === 'function') {
+            window.GalaxyScene.hideVerse(activeVerseIndex);
+            saveViewedVerse(activeVerseIndex);
+            activeVerseIndex = null;
+        }
         var video = modalMedia.querySelector('video');
         var audio = modalAudio.querySelector('audio');
         if (video) video.pause();
@@ -120,6 +149,7 @@
             window.GalaxyScene.init({
                 container: threeContainer,
                 starData: starData,
+                hiddenIndexes: getViewedVerseIndexes(),
                 onVerseClick: openModal
             });
         } catch (err) {
