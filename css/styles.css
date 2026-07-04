@@ -470,9 +470,14 @@ body {
     margin-bottom: 20px;
 }
 
+.modal-audio:has(> audio) {
+    margin-bottom: 0;
+    height: 0;
+    overflow: hidden;
+}
+
 .modal-audio audio {
-    width: 100%;
-    outline: none;
+    display: none;
 }
 
 .back-button {

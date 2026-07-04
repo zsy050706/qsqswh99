@@ -84,7 +84,12 @@
         modalText.textContent = data.text;
 
         if (data.audio) {
-            modalAudio.innerHTML = '<audio controls><source src="' + data.audio + '" type="audio/mpeg"></audio>';
+            modalAudio.innerHTML = '<audio playsinline><source src="' + data.audio + '"></audio>';
+            var verseAudio = modalAudio.querySelector('audio');
+            if (verseAudio) {
+                verseAudio.currentTime = 0;
+                verseAudio.play().catch(function () {});
+            }
         } else {
             modalAudio.innerHTML = '<div class="modal-audio-placeholder">语音待启</div>';
         }
