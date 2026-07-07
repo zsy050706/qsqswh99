@@ -19,6 +19,8 @@
     var onControlsStart = null;
     var autoRotateResumeTimer = null;
     var hiddenVerseIndexes = {};
+    var hoveredIndex = null;
+    var versePositions = [];
 
     var raycaster = new THREE.Raycaster();
     var mouse = new THREE.Vector2();
@@ -63,6 +65,9 @@
 
     function hideVerse(index) {
         hiddenVerseIndexes[index] = true;
+        if (hoveredIndex === index) {
+            setHoveredIndex(null);
+        }
         verseEntries.forEach(function (entry) {
             if (entry.index === index) {
                 entry.hidden = true;
@@ -91,6 +96,168 @@
         }
 
         return positions;
+    }
+
+    function getNearestNeighborIndexes(index, count) {
+        var origin = versePositions[index];
+        if (!origin) return [];
+
+        var neighbors = [];
+        versePositions.forEach(function (pos, i) {
+            if (i === index || hiddenVerseIndexes[i]) return;
+            var dx = pos.x - origin.x;
+            var dy = pos.y - origin.y;
+            var dz = pos.z - origin.z;
+            neighbors.push({ index: i, dist: dx * dx + dy * dy + dz * dz });
+        });
+
+        neighbors.sort(function (a, b) {
+            return a.dist - b.dist;
+        });
+
+        return neighbors.slice(0, count).map(function (item) {
+            return item.index;
+        });
+    }
+
+    function createHoverEffect(verseColor) {
+        var group = new THREE.Group();
+        group.visible = false;
+
+        var lineCount = 16;
+        var lineLength = 175;
+        var linePositions = new Float32Array(lineCount * 2 * 3);
+        for (var i = 0; i < lineCount; i++) {
+            var angle = (i / lineCount) * Math.PI * 2;
+            var tilt = (i % 3 - 1) * 0.35;
+            linePositions[i * 6] = 0;
+            linePositions[i * 6 + 1] = 0;
+            linePositions[i * 6 + 2] = 0;
+            linePositions[i * 6 + 3] = Math.cos(angle) * lineLength;
+            linePositions[i * 6 + 4] = tilt * lineLength;
+            linePositions[i * 6 + 5] = Math.sin(angle) * lineLength * 0.72;
+        }
+
+        var lineGeo = new THREE.BufferGeometry();
+        lineGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+        var lineMat = new THREE.LineBasicMaterial({
+            color: new THREE.Color('rgb(' + verseColor.main + ')'),
+            transparent: true,
+            opacity: 0.68,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        group.add(new THREE.LineSegments(lineGeo, lineMat));
+
+        var sparkleCount = 32;
+        var sparklePos = new Float32Array(sparkleCount * 3);
+        for (var j = 0; j < sparkleCount; j++) {
+            var radius = 55 + Math.random() * 140;
+            var theta = Math.random() * Math.PI * 2;
+            var phi = Math.acos(2 * Math.random() - 1);
+            sparklePos[j * 3] = radius * Math.sin(phi) * Math.cos(theta);
+            sparklePos[j * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            sparklePos[j * 3 + 2] = radius * Math.cos(phi);
+        }
+
+        var sparkleGeo = new THREE.BufferGeometry();
+        sparkleGeo.setAttribute('position', new THREE.BufferAttribute(sparklePos, 3));
+        var sparkleMat = new THREE.PointsMaterial({
+            color: new THREE.Color('rgb(' + verseColor.glow + ')'),
+            size: 6.5,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        group.add(new THREE.Points(sparkleGeo, sparkleMat));
+
+        var neighborLineGeo = new THREE.BufferGeometry();
+        var neighborLineMat = new THREE.LineBasicMaterial({
+            color: new THREE.Color('rgb(' + verseColor.glow + ')'),
+            transparent: true,
+            opacity: 0.48,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        var neighborLines = new THREE.LineSegments(neighborLineGeo, neighborLineMat);
+        group.add(neighborLines);
+
+        group.userData = {
+            lineMat: lineMat,
+            sparkleMat: sparkleMat,
+            neighborLineMat: neighborLineMat,
+            neighborLines: neighborLines,
+            phase: Math.random() * Math.PI * 2
+        };
+
+        return group;
+    }
+
+    function updateNeighborLines(entry, index) {
+        var origin = versePositions[index];
+        var neighborIndexes = getNearestNeighborIndexes(index, 3);
+        var positions = new Float32Array(neighborIndexes.length * 2 * 3);
+
+        neighborIndexes.forEach(function (neighborIndex, i) {
+            var neighbor = versePositions[neighborIndex];
+            positions[i * 6] = 0;
+            positions[i * 6 + 1] = 0;
+            positions[i * 6 + 2] = 0;
+            positions[i * 6 + 3] = neighbor.x - origin.x;
+            positions[i * 6 + 4] = neighbor.y - origin.y;
+            positions[i * 6 + 5] = neighbor.z - origin.z;
+        });
+
+        entry.hoverEffectGroup.userData.neighborLines.geometry.setAttribute(
+            'position',
+            new THREE.BufferAttribute(positions, 3)
+        );
+        entry.hoverEffectGroup.userData.neighborLines.geometry.attributes.position.needsUpdate = true;
+    }
+
+    function setHoveredIndex(index) {
+        if (hoveredIndex === index) return;
+
+        if (hoveredIndex !== null) {
+            verseEntries.forEach(function (entry) {
+                if (entry.index !== hoveredIndex || entry.hidden) return;
+                entry.hoverEffectGroup.visible = false;
+                entry.labelEl.classList.remove('verse-node-hovered');
+            });
+        }
+
+        hoveredIndex = index;
+
+        if (hoveredIndex === null) {
+            if (renderer) renderer.domElement.style.cursor = 'grab';
+            return;
+        }
+
+        verseEntries.forEach(function (entry) {
+            if (entry.index !== hoveredIndex || entry.hidden) return;
+            updateNeighborLines(entry, hoveredIndex);
+            entry.hoverEffectGroup.visible = true;
+            entry.labelEl.classList.add('verse-node-hovered');
+        });
+
+        if (renderer) renderer.domElement.style.cursor = 'pointer';
+    }
+
+    function pickVerseAt(clientX, clientY) {
+        if (!renderer || !camera) return null;
+
+        var rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        var hits = raycaster.intersectObjects(hitMeshes, false);
+
+        if (hits.length === 0) return null;
+
+        var hitIndex = hits[0].object.userData.index;
+        return hiddenVerseIndexes[hitIndex] ? null : hitIndex;
     }
 
     function createBackgroundParticles() {
@@ -166,6 +333,12 @@
             var dist = camera.position.distanceTo(worldPos);
             var opacity = THREE.MathUtils.clamp(1.4 - dist / 1600, 0.12, 0.9);
             var scale = THREE.MathUtils.clamp(700 / dist, 0.45, 1.15);
+            var isHovered = entry.index === hoveredIndex;
+
+            if (isHovered) {
+                opacity = Math.min(1, opacity * 1.35);
+                scale = Math.min(1.35, scale * 1.12);
+            }
 
             entry.labelEl.style.display = '';
             entry.labelEl.style.left = x + 'px';
@@ -189,8 +362,29 @@
         }
 
         controls.update();
+
+        var time = Date.now() * 0.004;
+        verseEntries.forEach(function (entry) {
+            if (!entry.hoverEffectGroup.visible) return;
+
+            var effect = entry.hoverEffectGroup.userData;
+            var pulse = 0.5 + 0.5 * Math.sin(time + effect.phase);
+            effect.sparkleMat.opacity = 0.45 + pulse * 0.55;
+            effect.lineMat.opacity = 0.35 + pulse * 0.5;
+            effect.neighborLineMat.opacity = 0.25 + pulse * 0.7;
+            entry.hoverEffectGroup.rotation.y += 0.01;
+        });
+
         updateVerseLabels();
         renderer.render(scene, camera);
+    }
+
+    function onPointerMove(e) {
+        setHoveredIndex(pickVerseAt(e.clientX, e.clientY));
+    }
+
+    function onPointerLeave() {
+        setHoveredIndex(null);
     }
 
     function onPointerDown(e) {
@@ -286,6 +480,7 @@
         scene.add(backgroundParticles);
 
         var positions = computePositions3D(starData.length);
+        versePositions = positions;
         hitMeshes = [];
         verseEntries = [];
 
@@ -302,8 +497,11 @@
             group.add(hitMesh);
             hitMeshes.push(hitMesh);
 
-            var labelEl = document.createElement('div');
             var verseColor = getVerseColor(index);
+            var hoverEffectGroup = createHoverEffect(verseColor);
+            group.add(hoverEffectGroup);
+
+            var labelEl = document.createElement('div');
             var isHidden = !!hiddenVerseIndexes[index];
             labelEl.className = isHidden ? 'verse-node verse-node-hidden' : 'verse-node';
             labelEl.style.animationDelay = (Math.random() * 3) + 's';
@@ -328,15 +526,32 @@
                         onVerseClick(idx);
                     }
                 });
+                el.addEventListener('mouseenter', function () {
+                    setHoveredIndex(idx);
+                });
+                el.addEventListener('mouseleave', function () {
+                    if (hoveredIndex === idx) {
+                        setHoveredIndex(null);
+                    }
+                });
             })(index, labelEl);
 
             group.visible = !isHidden;
             scene.add(group);
-            verseEntries.push({ index: index, group: group, labelEl: labelEl, hitMesh: hitMesh, hidden: isHidden });
+            verseEntries.push({
+                index: index,
+                group: group,
+                labelEl: labelEl,
+                hitMesh: hitMesh,
+                hoverEffectGroup: hoverEffectGroup,
+                hidden: isHidden
+            });
         });
 
         renderer.domElement.addEventListener('pointerdown', onPointerDown);
         renderer.domElement.addEventListener('pointerup', onPointerUp);
+        renderer.domElement.addEventListener('pointermove', onPointerMove);
+        renderer.domElement.addEventListener('pointerleave', onPointerLeave);
         window.addEventListener('resize', onResize);
 
         onControlsStart = function () {
@@ -366,6 +581,8 @@
         if (renderer) {
             renderer.domElement.removeEventListener('pointerdown', onPointerDown);
             renderer.domElement.removeEventListener('pointerup', onPointerUp);
+            renderer.domElement.removeEventListener('pointermove', onPointerMove);
+            renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
         }
 
         window.removeEventListener('resize', onResize);
@@ -391,6 +608,8 @@
 
         hitMeshes = [];
         verseEntries = [];
+        versePositions = [];
+        hoveredIndex = null;
 
         if (scene) {
             scene.traverse(function (obj) {

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>星河寄语 · 终章</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="finale-page">
+    <div class="finale-starfield" id="finaleStars"></div>
+    <main class="finale-content">
+        <p class="finale-eyebrow">一百颗星，一百句低语</p>
+        <h1 class="finale-title">星河尽头，是你</h1>
+        <div class="finale-divider"></div>
+        <p class="finale-text">
+            从相遇的第一缕光，到相守的最后一颗星，<br>
+            你把整片星河都走完了。<br><br>
+            这些星星没有消失，它们只是从夜空里<br>
+            落进了我的心里，永远亮着。
+        </p>
+        <p class="finale-sign">—— 愿我如星君如月，夜夜流光相皎洁</p>
+        <a class="finale-button" href="love_message.html">再望一眼星河</a>
+    </main>
+    <script>
+        (function () {
+            var container = document.getElementById('finaleStars');
+            if (!container) return;
+            for (var i = 0; i < 120; i++) {
+                var star = document.createElement('div');
+                star.className = 'bg-star';
+                var size = Math.random() * 2.5 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDuration = (2 + Math.random() * 3) + 's';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                container.appendChild(star);
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 window.STAR_DATA = [
-            // 每条格式：{ photo: '图片路径', video: '视频路径', text: '文字', audio: '语音路径' }
+            // 每条格式：{ photo: '图片路径', video: '视频路径', text: '文字', audio: '语音路径', theme: '卡片主题' }
             // video 优先于 photo 显示；留空 '' 则显示占位
+            // theme 可选：moon-letter / snow-postcard / rain-window / cat-bow / strawberry-cream / cherry-polaroid / candy-ticket / garden-note
             { photo: '', video: '', text: '初次相遇，是在那个阳光明媚的午后。你从人群中走来，带着温暖的笑容，那一刻，时间仿佛静止了。', audio: 'audios/001.mp3' },
             { photo: '', text: '还记得我们第一次说话吗？你的声音温柔而清澈，像春天的溪水，流淌进我的心田。', audio: '' },
             { photo: '', text: '那天的风很轻，云很淡，而你，是我眼中最美的风景。', audio: '' },

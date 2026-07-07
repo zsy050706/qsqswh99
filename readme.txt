@@ -2,13 +2,25 @@
 ====================
 
 【重要】代码已拆分为多个文件，请保持文件夹结构完整：
-  love_message.html / css/styles.css / js/data.js / js/app.js
+  love_message.html / server.js / package.json / css/styles.css / js/data.js / js/boot.js / js/galaxy.js
   生日礼物部署指南请阅读 DEPLOY.md
 
-一、如何使用本地文件
+一、如何启动后端版本
 --------------------
-1. 直接双击 love_message.html 文件即可打开
-2. 页面会显示星空背景和古风按钮，点击后进入星途
+1. 先确认电脑已安装 Node.js
+2. 在当前 No1 文件夹打开终端
+3. 执行：
+
+   npm start
+
+4. 浏览器打开：
+
+   http://localhost:3000
+
+5. 页面会显示星空背景和古风按钮，点击后进入星途
+
+说明：现在点击星星后的收集状态会保存到后端的 state/progress.json。
+如果直接双击 love_message.html 打开，页面仍可用，但只能使用浏览器本地备份，不能写入后端。
 
 二、页面结构
 ------------
@@ -54,36 +66,39 @@
 {
     photo: '照片路径',
     text: '你的文字记录',
-    audio: '语音文件路径'
+    audio: '语音文件路径',
+    theme: '卡片主题'
 }
 
 示例：
 {
     photo: 'photos/001.jpg',
     text: '初次相遇，是在那个阳光明媚的午后...',
-    audio: 'audios/001.mp3'
+    audio: 'audios/001.mp3',
+    theme: 'cat-bow'
 }
 
 将你准备好的照片放在 photos/ 文件夹，语音放在 audios/ 文件夹，然后逐个替换占位内容即可。
+theme 可以不写，不写时会按星星编号自动轮换样式。
+可选主题：moon-letter、snow-postcard、rain-window、cat-bow、strawberry-cream、cherry-polaroid、candy-ticket、garden-note。
 
 八、部署到服务器
 ----------------
-方式一：阿里云 OSS（推荐，成本最低）
-1. 登录阿里云控制台，打开 OSS 服务
-2. 创建一个 Bucket，设置为公共读
-3. 将 love_message.html、click.mp3、bgm.mp3 以及 photos/ 和 audios/ 文件夹上传到 Bucket 中
-4. 获取文件的公共访问 URL，即可在线访问
-
-方式二：阿里云 ECS 服务器
+方式一：阿里云 ECS / 轻量应用服务器（推荐给后端持久化版本）
 1. 购买阿里云 ECS 服务器（推荐轻量应用服务器，配置足够）
-2. 安装 Nginx 或 Apache 服务
-3. 将文件上传到 /usr/share/nginx/html/ 目录
-4. 配置服务器安全组开放 80 端口
-5. 通过服务器公网 IP 访问
+2. 安装 Node.js
+3. 上传整个 No1 文件夹
+4. 在 No1 文件夹里执行 npm start
+5. 配置安全组开放 3000 端口，或用 Nginx 反向代理到 80/443 端口
+6. 通过服务器公网 IP 或域名访问
 
-方式三：免费静态托管（推荐）
-1. GitHub Pages - 将文件上传到 GitHub 仓库，开启 Pages 功能
-2. Netlify/Vercel - 直接拖拽上传文件即可部署
+方式二：Render / Railway / Fly.io 等 Node 托管
+1. 上传项目仓库
+2. 启动命令填写 npm start
+3. 平台分配网址后即可访问
+
+注意：GitHub Pages、Netlify Drop、阿里云 OSS 属于静态托管，不能运行这个 Node 后端。
+如果用静态托管，页面可以打开，但点击状态无法保存到服务端。
 
 九、关于在线访问
 ----------------
@@ -102,8 +117,13 @@
 
 十一、是否需要后端
 -------------------
-不需要后端！这是一个纯静态的HTML页面，所有内容都在前端实现。
-你只需要将HTML文件和相关资源（图片、音频）上传到服务器即可。
+如果你希望“点过的星星”换浏览器、换设备后仍然保持，就需要后端。
+当前项目已加入 Node 后端：
+- GET /api/progress：读取已点亮星星
+- POST /api/progress/viewed：保存单颗已点亮星星
+- POST /api/progress/sync：同步本地备份到后端
+
+服务端状态文件：state/progress.json
 
 十二、页面特性
 --------------

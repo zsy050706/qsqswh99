@@ -16,16 +16,24 @@
 
 ---
 
-## 推荐方案：Netlify 免费部署（最简单）
+## 推荐方案：Node 服务器部署（支持保存点击状态）
 
-**优点**：免费、5 分钟搞定、自动生成 HTTPS 链接、手机电脑都能看。
+**优点**：点过的星星会保存到服务端，换浏览器、换设备也能保持进度。
 
 ### 步骤
 
-1. 在电脑上打开 [https://app.netlify.com/drop](https://app.netlify.com/drop)（Netlify Drop 页面）
-2. 把整个 `No1` 文件夹 **拖进去**（包含 html、css、js、照片、音频）
-3. 等待上传完成，会得到一个类似 `https://random-name.netlify.app` 的网址
-4. 点击 Netlify 后台的 **Site settings → Change site name**，改成好记的名字，例如 `our-star-story.netlify.app`
+1. 准备一台能运行 Node.js 的服务器，例如阿里云轻量应用服务器、ECS、Render、Railway 等
+2. 上传整个 `No1` 文件夹（包含 html、css、js、照片、音频、`server.js`、`package.json`）
+3. 在服务器的 `No1` 文件夹里执行：
+
+```bash
+npm start
+```
+
+4. 浏览器访问服务器地址，例如 `http://服务器IP:3000`
+5. 如果要用正式域名，建议用 Nginx 把 80/443 端口反向代理到 `localhost:3000`
+
+服务端保存文件是 `state/progress.json`。
 
 ### 做成礼物
 
@@ -37,22 +45,16 @@
 
 ## 备选方案
 
-### 方案 B：GitHub Pages（长期稳定）
+### 方案 B：静态托管（只能本地备份进度）
 
-1. 注册 GitHub 账号
-2. 新建仓库，上传 `No1` 文件夹内所有文件
-3. 仓库 Settings → Pages → Source 选 main 分支
-4. 获得 `https://你的用户名.github.io/仓库名/love_message.html`
+GitHub Pages、Netlify Drop、阿里云 OSS 都不能运行 Node 后端。
+这些方式仍然可以打开页面，但“已点亮星星”只能存在浏览器本地备份里，换设备不会同步。
 
 ### 方案 C：本地 U 盘 / 微信发文件（无网络也能看）
 
 1. 把整个 `No1` 文件夹复制到 U 盘
 2. 让她双击 `love_message.html` 打开
-3. **注意**：照片和音频路径要正确，且需在同一文件夹内
-
-### 方案 D：阿里云 OSS（国内访问快）
-
-详见 `readme.txt` 第八节。
+3. **注意**：这种方式不会写入后端，只会使用浏览器本地备份
 
 ---
 
@@ -60,9 +62,10 @@
 
 在送给她的之前，你自己先测一遍：
 
-- [ ] 双击 `love_message.html` 能正常打开
+- [ ] 执行 `npm start` 后，能打开 `http://localhost:3000`
 - [ ] 点击「开启星途」能进入星河
 - [ ] 滑动流畅，星星能点开看文字
+- [ ] 点开并关闭一颗星后，`state/progress.json` 会出现对应编号
 - [ ] `click.mp3` 和 `bgm.mp3` 已放入 `No1` 文件夹
 - [ ] 照片已放入 `photos/` 并在 `js/data.js` 里填好路径
 - [ ] 手机浏览器测试一遍（比电脑更重要）
@@ -101,11 +104,16 @@
 ```
 No1/
 ├── love_message.html    ← 入口页面
+├── server.js            ← 后端服务和进度 API
+├── package.json         ← npm start 启动配置
 ├── css/
 │   └── styles.css       ← 样式
 ├── js/
 │   ├── data.js          ← 100 条星语数据（你主要改这个）
-│   └── app.js           ← 交互与动画逻辑
+│   ├── boot.js          ← 页面交互和进度同步逻辑
+│   └── galaxy.js        ← 3D 星河逻辑
+├── state/
+│   └── progress.json    ← 后端自动生成的已点亮进度
 ├── photos/              ← 放照片
 ├── audios/              ← 放语音
 ├── click.mp3

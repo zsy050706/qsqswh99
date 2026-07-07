@@ -26,12 +26,35 @@
         <button class="back-button" id="backButton">归去</button>
         <div class="three-container" id="threeContainer"></div>
         <div class="hint-text" id="hintText">漫游星河 · 每一句低语都藏着一个故事</div>
-        <div class="depth-indicator" id="depthIndicator">相遇 → 相识 → 相知 → 相恋 → 相守</div>
+        <nav class="stage-nav" id="stageNav" aria-label="星图阶段">
+            <div class="stage-nav-header">
+                <span class="stage-nav-title">星图</span>
+                <span class="stage-nav-progress" id="stageProgress">0 / 100</span>
+            </div>
+            <div class="stage-tabs" id="stageTabs"></div>
+        </nav>
     </div>
+
+    <div class="collection-backdrop" id="collectionBackdrop"></div>
+    <aside class="collection-panel" id="collectionPanel" aria-hidden="true">
+        <div class="collection-panel-header">
+            <div>
+                <h3 class="collection-panel-title" id="collectionPanelTitle">相遇</h3>
+                <p class="collection-panel-subtitle" id="collectionPanelSubtitle">已收集 0 / 20 颗星</p>
+            </div>
+            <button type="button" class="collection-close" id="collectionClose" aria-label="关闭">×</button>
+        </div>
+        <div class="collection-grid" id="collectionGrid"></div>
+    </aside>
 
     <div class="modal-overlay" id="modalOverlay">
         <button class="close-modal" id="closeModal">×</button>
         <div class="modal-content">
+            <div class="modal-scene" id="modalScene" aria-hidden="true"></div>
+            <div class="modal-letter-head">
+                <span class="modal-kicker" id="modalKicker">A LETTER FOR YOU</span>
+                <span class="modal-stamp" id="modalStamp">STAR MAIL</span>
+            </div>
             <div class="modal-media" id="modalMedia">
                 <div class="modal-media-placeholder">影像待启</div>
             </div>
